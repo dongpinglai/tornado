@@ -22,8 +22,9 @@ configuring a WSGI container to find your application, you write a
 Configure your operating system or process manager to run this program to
 start the server. Please note that it may be necessary to increase the number 
 of open files per process (to avoid "Too many open files"-Error). 
-To raise this limit (setting it to 50000 for example)  you can use the ulimit command, 
-modify /etc/security/limits.conf or setting ``minfds`` in your supervisord config.
+To raise this limit (setting it to 50000 for example)  you can use the
+``ulimit`` command, modify ``/etc/security/limits.conf`` or set
+``minfds`` in your `supervisord <http://www.supervisord.org>`_ config.
 
 Processes and ports
 ~~~~~~~~~~~~~~~~~~~
@@ -33,8 +34,9 @@ multiple Python processes to take full advantage of multi-CPU machines.
 Typically it is best to run one process per CPU.
 
 Tornado includes a built-in multi-process mode to start several
-processes at once.  This requires a slight alteration to the standard
-main function:
+processes at once (note that multi-process mode does not work on
+Windows). This requires a slight alteration to the standard main
+function:
 
 .. testcode::
 
@@ -50,8 +52,8 @@ main function:
 
 This is the easiest way to start multiple processes and have them all
 share the same port, although it has some limitations.  First, each
-child process will have its own IOLoop, so it is important that
-nothing touch the global IOLoop instance (even indirectly) before the
+child process will have its own ``IOLoop``, so it is important that
+nothing touches the global ``IOLoop`` instance (even indirectly) before the
 fork.  Second, it is difficult to do zero-downtime updates in this model.
 Finally, since all the processes share the same port it is more difficult
 to monitor them individually.
@@ -67,10 +69,10 @@ to present a single address to outside visitors.
 Running behind a load balancer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When running behind a load balancer like nginx, it is recommended to
-pass ``xheaders=True`` to the `.HTTPServer` constructor. This will tell
-Tornado to use headers like ``X-Real-IP`` to get the user's IP address
-instead of attributing all traffic to the balancer's IP address.
+When running behind a load balancer like `nginx <http://nginx.net/>`_,
+it is recommended to pass ``xheaders=True`` to the `.HTTPServer` constructor.
+This will tell Tornado to use headers like ``X-Real-IP`` to get the user's
+IP address instead of attributing all traffic to the balancer's IP address.
 
 This is a barebones nginx config file that is structurally similar to
 the one we use at FriendFeed. It assumes nginx and the Tornado servers
@@ -169,7 +171,7 @@ You can serve static files from Tornado by specifying the
     ], **settings)
 
 This setting will automatically make all requests that start with
-``/static/`` serve from that static directory, e.g.,
+``/static/`` serve from that static directory, e.g.
 ``http://localhost:8888/static/foo.png`` will serve the file
 ``foo.png`` from the specified static directory. We also automatically
 serve ``/robots.txt`` and ``/favicon.ico`` from the static directory
@@ -219,7 +221,7 @@ significantly improving rendering performance.
 
 In production, you probably want to serve static files from a more
 optimized static file server like `nginx <http://nginx.net/>`_. You
-can configure most any web server to recognize the version tags used
+can configure almost any web server to recognize the version tags used
 by ``static_url()`` and set caching headers accordingly.  Here is the
 relevant portion of the nginx configuration we use at FriendFeed::
 
@@ -248,7 +250,7 @@ individual flag takes precedence):
   server down in a way that debug mode cannot currently recover from.
 * ``compiled_template_cache=False``: Templates will not be cached.
 * ``static_hash_cache=False``: Static file hashes (used by the
-  ``static_url`` function) will not be cached
+  ``static_url`` function) will not be cached.
 * ``serve_traceback=True``: When an exception in a `.RequestHandler`
   is not caught, an error page including a stack trace will be
   generated.
@@ -273,41 +275,3 @@ On some platforms (including Windows and Mac OSX prior to 10.6), the
 process cannot be updated "in-place", so when a code change is
 detected the old server exits and a new one starts.  This has been
 known to confuse some IDEs.
-
-
-WSGI and Google App Engine
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Tornado is normally intended to be run on its own, without a WSGI
-container.  However, in some environments (such as Google App Engine),
-only WSGI is allowed and applications cannot run their own servers.
-In this case Tornado supports a limited mode of operation that does
-not support asynchronous operation but allows a subset of Tornado's
-functionality in a WSGI-only environment.  The features that are
-not allowed in WSGI mode include coroutines, the ``@asynchronous``
-decorator, `.AsyncHTTPClient`, the ``auth`` module, and WebSockets.
-
-You can convert a Tornado `.Application` to a WSGI application
-with `tornado.wsgi.WSGIAdapter`.  In this example, configure
-your WSGI container to find the ``application`` object:
-
-.. testcode::
-
-    import tornado.web
-    import tornado.wsgi
-
-    class MainHandler(tornado.web.RequestHandler):
-        def get(self):
-            self.write("Hello, world")
-
-    tornado_app = tornado.web.Application([
-        (r"/", MainHandler),
-    ])
-    application = tornado.wsgi.WSGIAdapter(tornado_app)
-
-.. testoutput::
-   :hide:
-
-See the `appengine example application
-<https://github.com/tornadoweb/tornado/tree/stable/demos/appengine>`_ for a
-full-featured AppEngine app built on Tornado.

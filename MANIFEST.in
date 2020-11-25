@@ -1,6 +1,7 @@
 recursive-include demos *.py *.yaml *.html *.css *.js *.xml *.sql README
 recursive-include docs *
 prune docs/build
+include tornado/py.typed
 include tornado/speedups.c
 include tornado/test/README
 include tornado/test/csv_translations/fr_FR.csv
@@ -16,5 +17,6 @@ include tornado/test/static_foo.txt
 include tornado/test/templates/utf8.html
 include tornado/test/test.crt
 include tornado/test/test.key
+include LICENSE
 include README.rst
 include runtests.sh
